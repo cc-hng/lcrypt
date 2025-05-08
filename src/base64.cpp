@@ -182,6 +182,40 @@ public:
         auto xx = hn::Zero(_d8);
         auto yy = hn::Zero(_d8);
 
+        if (len >= 4 * step) {
+            auto xx1 = hn::Zero(_d8);
+            auto yy1 = hn::Zero(_d8);
+            auto xx2 = hn::Zero(_d8);
+            auto yy2 = hn::Zero(_d8);
+            auto xx3 = hn::Zero(_d8);
+            auto yy3 = hn::Zero(_d8);
+
+            while (idx + 4 * step - 1 < len) {
+                xx = loadone(src + idx, step);
+                idx += step;
+                xx1 = loadone(src + idx, step);
+                idx += step;
+                xx2 = loadone(src + idx, step);
+                idx += step;
+                xx3 = loadone(src + idx, step);
+                idx += step;
+
+                yy  = encode_helper(xx);
+                yy1 = encode_helper(xx1);
+                yy2 = encode_helper(xx2);
+                yy3 = encode_helper(xx3);
+
+                hn::StoreU(yy, _d8, dest + j);
+                j += N8;
+                hn::StoreU(yy1, _d8, dest + j);
+                j += N8;
+                hn::StoreU(yy2, _d8, dest + j);
+                j += N8;
+                hn::StoreU(yy3, _d8, dest + j);
+                j += N8;
+            }
+        }
+
         while (idx + step - 1 < len) {
             xx = loadone(src + idx, step);
             yy = encode_helper(xx);
