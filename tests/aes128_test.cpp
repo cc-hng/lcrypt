@@ -1,0 +1,21 @@
+#include <gtest/gtest.h>
+#include <lcrypt/aes128.h>
+
+using namespace lc;
+
+TEST(crypto, aes128) {
+    std::string plain1           = "abcdefg";
+    std::vector<uint8_t> cipher1 = {0x9D, 0xBE, 0x69, 0x4C, 0x91, 0xE3, 0xE2, 0xBB,
+                                    0xD0, 0xFA, 0xC1, 0xDD, 0x4B, 0x79, 0x3F, 0xF9};
+
+    std::string plain2           = "abcdefghijklmnop";
+    std::vector<uint8_t> cipher2 = {0x56, 0xC2, 0xD1, 0xE9, 0xAA, 0xCD, 0x74, 0xD8,
+                                    0x48, 0xD2, 0x50, 0xC4, 0x3D, 0xCD, 0xF0, 0x1A,
+                                    0xF1, 0x58, 0x84, 0xB6, 0xD0, 0xF5, 0x96, 0xB0,
+                                    0x24, 0x1D, 0xC8, 0xF9, 0x66, 0xC4, 0xA9, 0x3F};
+
+    EXPECT_EQ(aes128_enc(plain1, "123"), cipher1);
+    EXPECT_EQ(aes128_enc(plain2, "123"), cipher2);
+    EXPECT_EQ(to_span(aes128_dec(cipher1, "123")), plain1);
+    EXPECT_EQ(to_span(aes128_dec(cipher2, "123")), plain2);
+}

@@ -1,0 +1,70 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 24, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "generator": "Ninja",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "default",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/opt/my/x64",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "inherits": [ "base" ]
+    },
+    {
+      "name": "aarch64",
+      "toolchainFile": "/opt/gcc/toolchains/aarch64-linux-gnu.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/opt/my/aarch64"
+      },
+      "inherits": [ "base" ]
+    },
+    {
+      "name": "arm",
+      "toolchainFile": "/opt/gcc/toolchains/arm-none-linux.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/opt/my/arm32"
+      },
+      "inherits": [ "base" ]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "scheduleRandom": true,
+        "stopOnFailure": false,
+        "timeout": 60
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "default",
+      "steps": [
+        { "type": "configure", "name": "default" },
+        { "type": "build", "name": "default" },
+        { "type": "test", "name": "default" }
+      ]
+    }
+  ]
+}
