@@ -81,14 +81,14 @@ struct aes128 {
             idx += N8;
         }
 
+        memset(tail_buf, (char)padding, 64);
+        const size_t remaining = len - idx;
         if (HWY_LIKELY(idx != len)) {
-            const size_t remaining = len - idx;
-            memset(tail_buf, (char)padding, 64);
             hwy::CopyBytes(src + idx, tail_buf, remaining);
-            auto in = hn::LoadU(_d8, (const uint8_t*)tail_buf);
-            in      = enc_blk(in, key_schedule);
-            hn::StoreN(in, _d8, dest + idx, remaining + padding);
         }
+        auto in = hn::LoadU(_d8, (const uint8_t*)tail_buf);
+        in      = enc_blk(in, key_schedule);
+        hn::StoreN(in, _d8, dest + idx, remaining + padding);
 
         return result;
     }
