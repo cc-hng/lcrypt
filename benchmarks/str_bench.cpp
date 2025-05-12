@@ -21,52 +21,6 @@
 //     return result;
 // }
 
-inline std::vector<std::string_view>  //
-str_split0(std::string_view str, std::string_view delimiter) {
-    size_t start       = 0;
-    size_t end         = 0;
-    size_t dlen        = delimiter.size();
-    size_t slen        = str.size();
-    const char* ps     = str.data();
-    const char* ps_end = ps + slen;
-    const char* pd     = delimiter.data();
-    std::vector<std::string_view> result;
-    result.reserve(16);
-
-    for (;;) {
-        auto p = (const char*)memmem(ps, ps_end - ps, pd, dlen);
-        if (!p) {
-            result.emplace_back(str.substr(start));
-            break;
-        }
-        result.emplace_back(std::string_view(ps, p));
-        ps = p + 1;
-    }
-
-    return result;
-}
-
-std::string str_join0(const std::vector<std::string_view>& vs, std::string_view delimiter) {
-    int count      = 0;
-    size_t dlen    = delimiter.size();
-    const char* pd = delimiter.data();
-    for (const auto& s : vs) {
-        count += s.size();
-    }
-    count += dlen * (vs.size() - 1);
-
-    std::string out;
-    out.reserve(count);
-    bool first = true;
-    for (const auto& s : vs) {
-        if (!first) {
-            out.append(delimiter);
-        }
-        out.append(s);
-    }
-    return out;
-}
-
 inline std::string str_toupper0(std::string_view str) {
     std::string result(str);
     std::transform(result.begin(), result.end(), result.begin(), ::toupper);
@@ -138,10 +92,8 @@ static void bench_string(bench::Bench& b) {
     b.run("toupper", [&] { bench::doNotOptimizeAway(str_toupper0(input)); });
     b.run("tolower(simd)", [&] { bench::doNotOptimizeAway(lc::str_tolower(input)); });
     b.run("tolower", [&] { bench::doNotOptimizeAway(str_tolower0(input)); });
-    b.run("split1", [&] { bench::doNotOptimizeAway(lc::str_split(input, ",")); });
-    b.run("split2", [&] { bench::doNotOptimizeAway(str_split0(input, ",")); });
-    b.run("join1", [&] { bench::doNotOptimizeAway(lc::str_join(splitted, ",")); });
-    b.run("join2", [&] { bench::doNotOptimizeAway(str_join0(splitted, ",")); });
+    b.run("split", [&] { bench::doNotOptimizeAway(lc::str_split(input, ",")); });
+    b.run("join", [&] { bench::doNotOptimizeAway(lc::str_join(splitted, ",")); });
 
     b.minEpochIterations(old);
 }

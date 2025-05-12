@@ -9,9 +9,6 @@ namespace hn = hwy::HWY_NAMESPACE;
 static HWY_FULL(uint8_t) _du8;
 using vec8_t = hn::Vec<decltype(_du8)>;
 
-#include <hwy/print-inl.h>
-#define PRINT_VEC8(caption, v8) hn::Print(_du8, caption, v8, 0, hn::Lanes(_du8))
-
 namespace lc {
 
 namespace detail {
@@ -66,6 +63,29 @@ std::string str_tolower(std::string_view s) {
 
 std::vector<std::string_view>  //
 str_split(std::string_view str, std::string_view delimiter, bool trim) {
+#if LC_HAS_MEMMEM
+    size_t start       = 0;
+    size_t end         = 0;
+    size_t dlen        = delimiter.size();
+    size_t slen        = str.size();
+    const char* ps     = str.data();
+    const char* ps_end = ps + slen;
+    const char* pd     = delimiter.data();
+    std::vector<std::string_view> result;
+    result.reserve(16);
+
+    for (;;) {
+        auto p = (const char*)memmem(ps, ps_end - ps, pd, dlen);
+        if (!p) {
+            result.emplace_back(std::string_view(ps, ps_end - ps));
+            break;
+        }
+        result.emplace_back(std::string_view(ps, p - ps));
+        ps = p + dlen;
+    }
+
+    return result;
+#else
     size_t start = 0;
     size_t end   = 0;
     size_t dlen  = delimiter.size();
@@ -80,6 +100,7 @@ str_split(std::string_view str, std::string_view delimiter, bool trim) {
     auto s = str.substr(start);
     result.emplace_back(trim ? str_trim(s) : s);
     return result;
+#endif
 }
 
 std::string str_join(const std::vector<std::string_view>& vs, std::string_view delimiter) {
