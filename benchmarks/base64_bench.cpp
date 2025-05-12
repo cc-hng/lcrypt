@@ -4,7 +4,6 @@
 #include <string_view>
 #include <vector>
 #include <lcrypt/base64.h>
-#include <lcrypt/hex.h>
 
 using namespace lc;
 
