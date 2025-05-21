@@ -87,7 +87,7 @@ static void bench_string(bench::Bench& b) {
     auto splitted = lc::str_split(input, ",");
     b.title("string");
     auto old = b.epochIterations();
-    // b.minEpochIterations(4096000);
+    b.minEpochIterations(10240);
     b.run("toupper(simd)", [&] { bench::doNotOptimizeAway(lc::str_toupper(input)); });
     b.run("toupper", [&] { bench::doNotOptimizeAway(str_toupper0(input)); });
     b.run("tolower(simd)", [&] { bench::doNotOptimizeAway(lc::str_tolower(input)); });

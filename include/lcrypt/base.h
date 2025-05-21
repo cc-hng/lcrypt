@@ -64,4 +64,13 @@ public:
     }
 };
 
+// rand
+
+/// [0, 1)
+double random();
+/// [0, m)
+size_t random(size_t m);
+/// [m, n]
+size_t random(size_t m, size_t n);
+
 }  // namespace lc

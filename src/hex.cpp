@@ -8,6 +8,56 @@
 #include <hwy/highway.h>
 #include <string.h>
 
+namespace unsimd {
+std::string hex_marshal(std::string_view what) {
+    static char hex[]   = "0123456789abcdef";
+    size_t sz           = what.size();
+    const uint8_t* text = (const uint8_t*)(what.data());
+    std::string out(sz * 2, '\0');
+    char* buffer = &out[0];
+    int i;
+    for (i = 0; i < (int)sz; i++) {
+        buffer[i * 2]     = hex[text[i] >> 4];
+        buffer[i * 2 + 1] = hex[text[i] & 0xf];
+    }
+    return out;
+}
+
+#define HEX(v, c)                              \
+    {                                          \
+        char tmp = (char)c;                    \
+        if (tmp >= '0' && tmp <= '9') {        \
+            v = tmp - '0';                     \
+        } else if (tmp >= 'A' && tmp <= 'F') { \
+            v = tmp - 'A' + 10;                \
+        } else {                               \
+            v = tmp - 'a' + 10;                \
+        }                                      \
+    }
+
+std::string hex_unmarshal(std::string_view what) {
+    size_t sz        = what.size();
+    const char* text = what.data();
+    if (sz & 1) {
+        throw std::runtime_error("Invalid hex text size");
+    }
+    std::string out(sz / 2, '\0');
+    char* buffer = &out[0];
+    int i;
+    for (i = 0; i < (int)sz; i += 2) {
+        uint8_t hi, low;
+        HEX(hi, text[i]);
+        HEX(low, text[i + 1]);
+        if (hi > 16 || low > 16) {
+            fprintf(stderr, "hi:%d, lo:%d, %c\n", hi, low, text[i + 1]);
+            throw std::runtime_error("Invalid hex text");
+        }
+        buffer[i / 2] = hi << 4 | low;
+    }
+    return out;
+}
+}  // namespace unsimd
+
 namespace hn = hwy::HWY_NAMESPACE;
 
 using vec_t = hn::Vec<HWY_FULL(uint8_t)>;
@@ -234,11 +284,21 @@ public:
 namespace lc {
 
 std::string hex_encode(const char* buf, size_t len) {
-    return hex::encode(std::string_view(buf, len));
+    auto s = std::string_view(buf, len);
+    if (len <= 8) {
+        return unsimd::hex_marshal(s);
+    } else {
+        return hex::encode(s);
+    }
 }
 
 std::string hex_decode(const char* buf, size_t len) {
-    return hex::decode(std::string_view(buf, len));
+    auto s = std::string_view(buf, len);
+    if (len <= 8) {
+        return unsimd::hex_unmarshal(s);
+    } else {
+        return hex::decode(s);
+    }
 }
 
 }  // namespace lc

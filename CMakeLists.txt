@@ -21,6 +21,10 @@ include(cmake/common.cmake)
 include(CheckFunctionExists)
 check_function_exists(memmem LC_HAS_MEMMEM)
 
+include(TestBigEndian)
+test_big_endian(LC_IS_BIG_ENDIAN)
+message(STATUS "big endian: ${LC_IS_BIG_ENDIAN}")
+
 #####################################
 # third-party packages
 #####################################
@@ -59,7 +63,10 @@ file(GLOB_RECURSE sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/**.
 
 add_library(${PROJECT_NAME} STATIC ${headers} ${sources})
 target_link_libraries(${PROJECT_NAME} PRIVATE hwy)
-target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<BOOL:${LC_HAS_MEMMEM}>:LC_HAS_MEMMEM>)
+target_compile_definitions(
+  ${PROJECT_NAME} PRIVATE
+    $<$<BOOL:${LC_IS_BIG_ENDIAN}>:LC_IS_BIG_ENDIAN>
+    $<$<BOOL:${LC_HAS_MEMMEM}>:LC_HAS_MEMMEM>)
 target_include_directories(
   ${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

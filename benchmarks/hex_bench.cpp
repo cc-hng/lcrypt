@@ -95,9 +95,6 @@ static void bench_hex(bench::Bench& b) {
     b.run("hex::encode", [&] { bench::doNotOptimizeAway(hex_marshal(input)); });
     b.run("hex::decode(simd)", [&] { bench::doNotOptimizeAway(hex_decode(input_hex)); });
     b.run("hex::decode", [&] { bench::doNotOptimizeAway(hex_unmarshal(input_hex)); });
-    b.run("hex::encode-small(simd)",
-          [] { bench::doNotOptimizeAway(hex_encode("abcdefghijklmnop")); });
-    b.run("hex::encode-small", [] { bench::doNotOptimizeAway(hex_marshal("abcdefghijklmnop")); });
 
     b.minEpochIterations(old);
 }
