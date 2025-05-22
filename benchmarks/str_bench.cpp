@@ -7,20 +7,6 @@
 #include <lcrypt/str.h>
 #include <string.h>
 
-// 字符串分割函数
-// inline std::vector<std::string_view> str_split0(std::string_view str, std::string_view delimiter) {
-//     std::vector<std::string_view> result;
-//     size_t start = 0;
-//     size_t end   = 0;
-//
-//     while ((end = str.find(delimiter, start)) != std::string_view::npos) {
-//         result.emplace_back(str.substr(start, end - start));  // 提取子字符串
-//         start = end + delimiter.size();                       // 移动到下一个位置
-//     }
-//     result.emplace_back(str.substr(start));  // 添加最后部分
-//     return result;
-// }
-
 inline std::string str_toupper0(std::string_view str) {
     std::string result(str);
     std::transform(result.begin(), result.end(), result.begin(), ::toupper);
@@ -88,10 +74,14 @@ static void bench_string(bench::Bench& b) {
     b.title("string");
     auto old = b.epochIterations();
     b.minEpochIterations(10240);
-    b.run("toupper(simd)", [&] { bench::doNotOptimizeAway(lc::str_toupper(input)); });
     b.run("toupper", [&] { bench::doNotOptimizeAway(str_toupper0(input)); });
-    b.run("tolower(simd)", [&] { bench::doNotOptimizeAway(lc::str_tolower(input)); });
+    b.run("toupper(simd)", [&] { bench::doNotOptimizeAway(lc::str_toupper(input)); });
+    b.run("toupper-small",
+          [&] { bench::doNotOptimizeAway(str_toupper0("aabcdefghijklabcdefghijklbcdefghi")); });
+    b.run("toupper-small(simd)",
+          [&] { bench::doNotOptimizeAway(lc::str_toupper("aabcdefghijklabcdefghijklbcdefghi")); });
     b.run("tolower", [&] { bench::doNotOptimizeAway(str_tolower0(input)); });
+    b.run("tolower(simd)", [&] { bench::doNotOptimizeAway(lc::str_tolower(input)); });
     b.run("split", [&] { bench::doNotOptimizeAway(lc::str_split(input, ",")); });
     b.run("join", [&] { bench::doNotOptimizeAway(lc::str_join(splitted, ",")); });
 

@@ -212,11 +212,16 @@ public:
 
         if (HWY_LIKELY(idx != len)) {
             const size_t remaining = len - idx;
-            xx                     = hn::LoadN(_d8, src + idx, remaining);
-            func(xx, hi, lo);
-            uint8_t buf[N * 2] = {0};
-            hn::StoreInterleaved2(hi, lo, _d8, buf);
-            memcpy(dest + idx * 2, buf, remaining * 2);
+            if (remaining <= 8) {
+                auto r = unsimd::hex_marshal(std::string_view((const char*)src + idx, remaining));
+                hwy::CopyBytes(r.data(), dest + idx * 2, remaining * 2);
+            } else {
+                xx = hn::LoadN(_d8, src + idx, remaining);
+                func(xx, hi, lo);
+                uint8_t buf[N * 2] = {0};
+                hn::StoreInterleaved2(hi, lo, _d8, buf);
+                hwy::CopyBytes(buf, dest + idx * 2, remaining * 2);
+            }
         }
 
         return result;

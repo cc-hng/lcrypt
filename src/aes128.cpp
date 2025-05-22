@@ -81,7 +81,11 @@ struct aes128 {
             idx += N8;
         }
 
+#if HWY_COMPILER_MSVC
         memset(tail_buf, (char)padding, 64);
+#else
+        __builtin_memset(tail_buf, (char)padding, 64);
+#endif
         const size_t remaining = len - idx;
         if (HWY_LIKELY(idx != len)) {
             hwy::CopyBytes(src + idx, tail_buf, remaining);

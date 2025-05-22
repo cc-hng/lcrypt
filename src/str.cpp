@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <stdexcept>
 #include <tuple>
 #include <hwy/contrib/unroller/unroller-inl.h>
@@ -27,6 +28,18 @@ using vec8_t = hn::Vec<decltype(_du8)>;
 namespace lc {
 
 namespace detail {
+
+inline std::string str_toupper0(std::string_view str) {
+    std::string result(str);
+    std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+    return result;
+}
+
+inline std::string str_tolower0(std::string_view str) {
+    std::string result(str);
+    std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+    return result;
+}
 
 struct UpperUnit : hn::UnrollerUnit<UpperUnit, uint8_t, uint8_t> {
     using TT = hn::ScalableTag<uint8_t>;
@@ -58,23 +71,20 @@ struct LowerUnit : hn::UnrollerUnit<LowerUnit, uint8_t, uint8_t> {
     }
 };
 
+inline int mcmp(const void* s1, const void* s2, size_t n) {
+#if HWY_COMPILER_MSVC
+    return memcmp(s1, s2, n);
+#else
+    return __builtin_memcmp(s1, s2, n);
+#endif
+}
+
 }  // namespace detail
 
 namespace detail {
 
 static inline int isdigit(int c) {
     return '0' <= c && c <= '9';
-}
-
-static inline void assure_space(PackFmtParser::buffer_t& b, int size) {
-    auto len = b.size();
-    if (b.capacity() - len < size) {
-        int s = len;
-        while (s < len + size) {
-            s *= 2;
-        }
-        b.reserve(s);
-    }
 }
 
 PackFmtParser::PackFmtParser(std::string_view fmt)
@@ -329,18 +339,26 @@ std::exception_ptr PackFmtParser::make_error(std::string_view tname, KOption op)
 
 std::string str_toupper(std::string_view s) {
     size_t len = s.size();
-    detail::UpperUnit upperfn;
-    std::string out(len, '\0');
-    hn::Unroller(upperfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len);
-    return out;
+    if (len < 16) {
+        return detail::str_toupper0(s);
+    } else {
+        detail::UpperUnit upperfn;
+        std::string out(len, '\0');
+        hn::Unroller(upperfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len);
+        return out;
+    }
 }
 
 std::string str_tolower(std::string_view s) {
     size_t len = s.size();
-    detail::LowerUnit lowerfn;
-    std::string out(len, '\0');
-    hn::Unroller(lowerfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len);
-    return out;
+    if (len < 16) {
+        return detail::str_tolower0(s);
+    } else {
+        detail::LowerUnit lowerfn;
+        std::string out(len, '\0');
+        hn::Unroller(lowerfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len);
+        return out;
+    }
 }
 
 std::vector<std::string_view>  //
@@ -399,12 +417,12 @@ std::string str_join(const std::vector<std::string_view>& vs, std::string_view d
     bool first = true;
     for (const auto& s : vs) {
         if (!first) {
-            memcpy(pout, pd, dlen);
+            hwy::CopyBytes(pd, pout, dlen);
             pout += dlen;
         }
         first      = false;
         size_t len = s.size();
-        memcpy(pout, s.data(), len);
+        hwy::CopyBytes(s.data(), pout, len);
         pout += len;
     }
     return out;
@@ -426,14 +444,14 @@ std::string_view str_trim(std::string_view str) {
 
 bool str_starts_with(std::string_view s, std::string_view prefix) {
     const size_t plen = prefix.size();
-    return s.size() >= plen && memcmp(s.data(), prefix.data(), plen) == 0;
+    return s.size() >= plen && detail::mcmp(s.data(), prefix.data(), plen) == 0;
 }
 
 bool str_ends_with(std::string_view s, std::string_view prefix) {
     const size_t slen = s.size();
     const size_t plen = prefix.size();
     const char* ps    = s.data();
-    return slen >= plen && memcmp(ps + slen - plen, prefix.data(), plen) == 0;
+    return slen >= plen && detail::mcmp(ps + slen - plen, prefix.data(), plen) == 0;
 }
 
 }  // namespace lc
