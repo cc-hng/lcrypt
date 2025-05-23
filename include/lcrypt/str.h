@@ -129,10 +129,10 @@ private:
     int getnum_from_current(int df);
 
     // packint()
-    void packint(buffer_t& b, uint64_t n, const option_t& op, int neg);
-    int64_t unpackint(std::string_view s, int islittle, int issigend);
+    static void packint(buffer_t& b, uint64_t n, const option_t& op, int neg);
+    static int64_t unpackint(std::string_view s, int islittle, int issigend);
     // int64_t unpackint(const option_t& op, int issigend);
-    void copywithendian(buffer_t& dest, const char* src, int size, int islittle);
+    static void copywithendian(buffer_t& dest, const char* src, int size, int islittle);
 };
 
 }  // namespace detail

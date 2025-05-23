@@ -234,7 +234,7 @@ int64_t PackFmtParser::unpackint(std::string_view s, int islittle, int issigned)
 }
 
 void PackFmtParser::copywithendian(buffer_t& b, const char* src, int size, int islittle) {
-    if (islittle_ == HWY_IS_LITTLE_ENDIAN) {
+    if (islittle == HWY_IS_LITTLE_ENDIAN) {
         b.insert(b.end(), src, src + size);
     } else {
         b.resize(b.size() + size);
