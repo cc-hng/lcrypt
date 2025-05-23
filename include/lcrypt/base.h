@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <stdint.h>
 #include <stdio.h>
 
 #define LCRYPT_HAS_MEMBER(member)                                                             \
@@ -57,9 +58,9 @@ public:
 
     const char* what() const noexcept override {
         char buf[1024] = {0};
-        auto n         = snprintf(buf, 1024, "Input error. offset = %d, byte = %d(%c)", offset_,
-                                  (int)byte_, (char)byte_);
-        msg_           = std::string(buf, n);
+        auto n = snprintf(buf, 1024, "Input error. offset = %d, byte = %d(%c)", (int)offset_,
+                          (int)byte_, (char)byte_);
+        msg_   = std::string(buf, n);
         return msg_.c_str();
     }
 };

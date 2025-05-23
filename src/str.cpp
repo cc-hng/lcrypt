@@ -331,7 +331,8 @@ std::string PackFmtParser::to_string(KOption op) {
 
 std::exception_ptr PackFmtParser::make_error(std::string_view tname, KOption op) {
     char buf[64] = {0};
-    auto n = snprintf(buf, 64, "Type dismatch(%s, %s)", std::string(tname).c_str(), to_string(op));
+    auto n       = snprintf(buf, 64, "Type dismatch(%s, %s)", std::string(tname).c_str(),
+                            to_string(op).c_str());
     return std::make_exception_ptr(std::runtime_error(std::string(buf, n)));
 }
 
