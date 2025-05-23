@@ -87,6 +87,8 @@ if(LCRYPT_BUILD_BENCHES)
    add_subdirectory(benchmarks)
 endif()
 
+add_subdirectory(examples)
+
 #####################################
 # install & pack
 #####################################
