@@ -16,7 +16,7 @@ public:
     using result_type = double;
     enum { N = hn::Lanes(hn::ScalableTag<uint64_t>()) };
 
-    explicit FloatCachedXoshiro(const result_type seed, const result_type threadNumber = 0)
+    explicit FloatCachedXoshiro(const uint64_t seed, const uint64_t threadNumber = 0)
       : generator_{seed, threadNumber}
       , cache_{generator_.Uniform<size>()}
       , index_{0} {}

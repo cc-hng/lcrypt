@@ -11,7 +11,8 @@
 namespace hn = hwy::HWY_NAMESPACE;
 
 static HWY_FULL(uint8_t) _du8;
-using vec8_t = hn::Vec<decltype(_du8)>;
+using vec8_t               = hn::Vec<decltype(_du8)>;
+static constexpr size_t N8 = hn::Lanes(_du8);
 
 #define MAX_SIZET ((size_t)(~(size_t)0))
 
@@ -28,18 +29,6 @@ using vec8_t = hn::Vec<decltype(_du8)>;
 namespace lc {
 
 namespace detail {
-
-inline std::string str_toupper0(std::string_view str) {
-    std::string result(str);
-    std::transform(result.begin(), result.end(), result.begin(), ::toupper);
-    return result;
-}
-
-inline std::string str_tolower0(std::string_view str) {
-    std::string result(str);
-    std::transform(result.begin(), result.end(), result.begin(), ::tolower);
-    return result;
-}
 
 struct UpperUnit : hn::UnrollerUnit<UpperUnit, uint8_t, uint8_t> {
     using TT = hn::ScalableTag<uint8_t>;
@@ -340,26 +329,32 @@ std::exception_ptr PackFmtParser::make_error(std::string_view tname, KOption op)
 
 std::string str_toupper(std::string_view s) {
     size_t len = s.size();
-    if (len < 16) {
-        return detail::str_toupper0(s);
-    } else {
+    size_t mod = len % N8;
+    std::string out(len, '\0');
+    if (len != mod || mod >= 16) {
         detail::UpperUnit upperfn;
-        std::string out(len, '\0');
-        hn::Unroller(upperfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len);
-        return out;
+        hn::Unroller(upperfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len - mod);
     }
+    if (mod < 16 && mod > 0) {
+        int start = len - mod;
+        std::transform(s.begin() + start, s.end(), out.data() + start, ::toupper);
+    }
+    return out;
 }
 
 std::string str_tolower(std::string_view s) {
     size_t len = s.size();
-    if (len < 16) {
-        return detail::str_tolower0(s);
-    } else {
+    size_t mod = len % N8;
+    std::string out(len, '\0');
+    if (len != mod || mod >= 16) {
         detail::LowerUnit lowerfn;
-        std::string out(len, '\0');
-        hn::Unroller(lowerfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len);
-        return out;
+        hn::Unroller(lowerfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len - mod);
     }
+    if (mod < 16 && mod > 0) {
+        int start = len - mod;
+        std::transform(s.begin() + start, s.end(), out.data() + start, ::tolower);
+    }
+    return out;
 }
 
 std::vector<std::string_view>  //

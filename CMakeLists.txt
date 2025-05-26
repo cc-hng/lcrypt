@@ -47,7 +47,7 @@ CPMAddPackage(
   NAME highway
   URL https://github.com/google/highway/archive/refs/tags/1.2.0.tar.gz
   URL_HASH SHA256=7e0be78b8318e8bdbf6fa545d2ecb4c90f947df03f7aadc42c1967f019e63343
-  PATCHES "${CMAKE_SOURCE_DIR}/cmake/highway.patch" # This adds SYSTEM to the includes.
+  PATCHES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/highway.patch" # This adds SYSTEM to the includes.
   OPTIONS
     "HWY_ENABLE_EXAMPLES OFF"
     "HWY_ENABLE_INSTALL ON"
