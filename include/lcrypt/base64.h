@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 #include <lcrypt/base.h>
 
 namespace lc {

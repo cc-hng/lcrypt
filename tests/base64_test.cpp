@@ -3,6 +3,17 @@
 
 using namespace lc;
 
+TEST(crypto, base64_b) {
+    std::string a = "abcdefghijklmnopqrstuvwxyz0123456789";
+    for (int i = 0; i < 10; ++i) {
+        a += a;
+    }
+    for (int i=0; i < a.size(); ++i) {
+        auto s = a.substr(0, i+1);
+        EXPECT_EQ(s, base64_decode( base64_encode(s)));
+    }
+}
+
 TEST(crypto, base64) {
     static const std::string in_1 = "a";
     static const std::string in_2 = "ab";
@@ -37,6 +48,7 @@ TEST(crypto, base64) {
     try {
         base64_decode(
             "YWJkZWZhZWRmYWZhZmFmYWZhZmFmYXNmYWZhc2Zkc2FmZGFzeHp2enZhYXNkYWRhZGFzZGFk]Q==");
+        EXPECT_TRUE(false);
     } catch (const input_error& e) {
         EXPECT_EQ(e.offset(), 72);
     }

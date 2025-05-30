@@ -32,10 +32,10 @@ namespace detail {
 
 struct UpperUnit : hn::UnrollerUnit<UpperUnit, uint8_t, uint8_t> {
     using TT = hn::ScalableTag<uint8_t>;
-    inline static TT _d;
-    inline static hn::Vec<TT> _0x61 = hn::Set(_d, 0x61);
-    inline static hn::Vec<TT> _0x7a = hn::Set(_d, 0x7a);
-    inline static hn::Vec<TT> _32   = hn::Set(_d, 32);
+    inline static constexpr TT _d{};
+    const hn::Vec<TT> _0x61 = hn::Set(_d, 0x61);
+    const hn::Vec<TT> _0x7a = hn::Set(_d, 0x7a);
+    const hn::Vec<TT> _32   = hn::Set(_d, 32);
 
     hn::Vec<TT> Func(ptrdiff_t idx, const hn::Vec<TT> xx, const hn::Vec<TT> yy) {
         (void)idx;
@@ -47,10 +47,10 @@ struct UpperUnit : hn::UnrollerUnit<UpperUnit, uint8_t, uint8_t> {
 
 struct LowerUnit : hn::UnrollerUnit<LowerUnit, uint8_t, uint8_t> {
     using TT = hn::ScalableTag<uint8_t>;
-    inline static TT _d;
-    inline static hn::Vec<TT> _0x41 = hn::Set(_d, 0x41);
-    inline static hn::Vec<TT> _0x5a = hn::Set(_d, 0x5a);
-    inline static hn::Vec<TT> _32   = hn::Set(_d, 32);
+    inline static constexpr TT _d{};
+    const hn::Vec<TT> _0x41 = hn::Set(_d, 0x41);
+    const hn::Vec<TT> _0x5a = hn::Set(_d, 0x5a);
+    const hn::Vec<TT> _32   = hn::Set(_d, 32);
 
     hn::Vec<TT> Func(ptrdiff_t idx, const hn::Vec<TT> xx, const hn::Vec<TT> yy) {
         (void)idx;

@@ -55,6 +55,16 @@ CPMAddPackage(
     "HWY_ENABLE_CONTRIB OFF"
 )
 
+# check flag
+if (MSVC)
+  include(CheckCXXCompilerFlag)
+  check_cxx_compiler_flag("/arch:AVX2" COMPILER_SUPPORTS_AVX2)
+  if (COMPILER_SUPPORTS_AVX2)
+    message(STATUS "MSVC compiler support AVX2")
+    target_compile_options(hwy PUBLIC "/arch:AVX2")
+  endif()
+endif()
+
 #####################################
 # target
 #####################################
@@ -86,6 +96,8 @@ endif()
 if(LCRYPT_BUILD_BENCHES)
    add_subdirectory(benchmarks)
 endif()
+
+add_subdirectory(examples)
 
 #####################################
 # install & pack
