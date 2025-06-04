@@ -84,7 +84,7 @@ struct EncodeUnit : hn::UnrollerUnit<EncodeUnit, u8, u8> {
             auto p2 = hn::LoadN(_d8, from + j + count - 4, count + 4);
             return hn::Add(p1, hn::SlideUpLanes(_d8, p2, 32));
         } else if constexpr (multiple == 2 || multiple == 1) {
-            return hn::LoadN(_d8, from + j - 4, count + 4);
+            return hn::LoadU(_d8, from + j - 4);
         } else {
             throw std::runtime_error("Unsupported lanes!!! sizeof(lanes) = " + std::to_string(N8));
         }
@@ -134,10 +134,10 @@ struct DecodeUnit : hn::UnrollerUnit<DecodeUnit, u8, u8> {
     };
     const hn::Vec<D> _lut = hn::LoadU(_d8, _lut_buf);
     const hn::Vec<D> _shift_lut = hn::Dup128VecFromValues(_d8,
-        /* 0 */ 0x60,        /* 1 */ 0x60,        /* 2 */ 0x3e - 0x2b, /* 3 */ 0x34 - 0x30,
+        /* 0 */ 0x00,        /* 1 */ 0x00,        /* 2 */ 0x3e - 0x2b, /* 3 */ 0x34 - 0x30,
         /* 4 */ 0x00 - 0x41, /* 5 */ 0x0f - 0x50, /* 6 */ 0x1a - 0x61, /* 7 */ 0x29 - 0x70,
-        /* 8 */ 0x60,        /* 9 */ 0x60,        /* a */ 0x60,        /* b */ 0x60,
-        /* c */ 0x60,        /* d */ 0x60,        /* e */ 0x60,        /* f */ 0x60
+        /* 8 */ 0x00,        /* 9 */ 0x00,        /* a */ 0x00,        /* b */ 0x00,
+        /* c */ 0x00,        /* d */ 0x00,        /* e */ 0x00,        /* f */ 0x00
     );
 
     static constexpr u8 linv = 1;
@@ -219,13 +219,10 @@ struct DecodeUnit : hn::UnrollerUnit<DecodeUnit, u8, u8> {
         ptrdiff_t j                = idx * 3 / 4;
         constexpr size_t count     = 12;  // 16 * 3 / 4
         constexpr size_t multiples = N8 / 16;
-        auto y                     = x;
+        HWY_ALIGN uint8_t buf[64] = {0};
+        hn::StoreU(x, _d8, buf);
         for (int i = 0; i < multiples; ++i, j += 12) {
-            if (i) {
-                y = hn::SlideDownLanes(_d8, y, i * 16);
-            }
-
-            hn::StoreN(y, _d8, to + j, count);
+            hwy::CopyBytes(buf+i* 16, to + j, count);
         }
         return true;
     }
@@ -251,12 +248,10 @@ struct DecodeUnit : hn::UnrollerUnit<DecodeUnit, u8, u8> {
         }
 
         const size_t z = left;
-        auto y         = x;
+        HWY_ALIGN uint8_t buf[64] = {0};
+        hn::StoreU(x, _d8, buf);
         for (int i = 0; i < multiples && left > 0; ++i, j += count, left -= count) {
-            if (i) {
-                y = hn::SlideDownLanes(_d8, y, i * 16);
-            }
-            hn::BlendedStore(y, hn::FirstN(_d8, HWY_MIN(left, count)), _d8, to + j);
+            hwy::CopyBytes(buf + i * 16, to + j, HWY_MIN(left, count));
         }
         return z;
     }
