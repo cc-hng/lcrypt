@@ -1,8 +1,6 @@
 #include "common.h"
 #include <ctime>
-#include <exception>
 #include <random>
-#include <stdexcept>
 #include <hwy/contrib/algo/copy-inl.h>
 #include <hwy/contrib/algo/find-inl.h>
 #include <hwy/highway.h>

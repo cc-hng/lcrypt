@@ -1,8 +1,5 @@
 #include "common.h"
-#include <exception>
 #include <stdexcept>
-#include <string_view>
-#include <vector>
 #include <lcrypt/base64.h>
 
 using namespace lc;

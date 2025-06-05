@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <stdexcept>
-#include <tuple>
 #include <hwy/contrib/unroller/unroller-inl.h>
 #include <hwy/highway.h>
 #include <lcrypt/base.h>
@@ -327,17 +326,27 @@ std::exception_ptr PackFmtParser::make_error(std::string_view tname, KOption op)
 
 }  // namespace detail
 
+namespace {
+inline char toupper0(char c) {
+    return (c >= 'a' && c <= 'z') ? c - (char)32 : c;
+}
+
+inline char tolower0(char c) {
+    return (c >= 'A' && c <= 'Z') ? c + (char)32 : c;
+}
+}
+
 std::string str_toupper(std::string_view s) {
     size_t len = s.size();
     size_t mod = len % N8;
     std::string out(len, '\0');
-    if (len != mod || mod >= 16) {
+    if (len > mod) {
         detail::UpperUnit upperfn;
         hn::Unroller(upperfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len - mod);
     }
-    if (mod < 16 && mod > 0) {
+    if (mod > 0) {
         int start = len - mod;
-        std::transform(s.begin() + start, s.end(), out.data() + start, ::toupper);
+        std::transform(s.begin() + start, s.end(), out.data() + start, toupper0);
     }
     return out;
 }
@@ -346,13 +355,13 @@ std::string str_tolower(std::string_view s) {
     size_t len = s.size();
     size_t mod = len % N8;
     std::string out(len, '\0');
-    if (len != mod || mod >= 16) {
+    if (len > mod) {
         detail::LowerUnit lowerfn;
         hn::Unroller(lowerfn, (uint8_t*)s.data(), (uint8_t*)out.data(), len - mod);
     }
-    if (mod < 16 && mod > 0) {
+    if (mod > 0) {
         int start = len - mod;
-        std::transform(s.begin() + start, s.end(), out.data() + start, ::tolower);
+        std::transform(s.begin() + start, s.end(), out.data() + start, tolower0);
     }
     return out;
 }

@@ -1,6 +1,5 @@
 #include "lcrypt/aes128.h"
 #include <array>
-#include <exception>
 #include <stdexcept>
 #include <hwy/highway.h>
 #include <stdint.h>

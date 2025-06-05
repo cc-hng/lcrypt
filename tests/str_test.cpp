@@ -19,10 +19,16 @@ inline auto tuple_pop_back(const std::tuple<Ts...>& t) {
 
 TEST(crypto, string) {
     std::string s1 = "abcABC123.-+/";
+    std::string s10 = "12345678901234567890123456789012abcABC123.-+/";
+    std::string s11 = "12345678abcABC234567890123456789012abcABC123.-+/xyz";
 
     // toupper | tolower
     EXPECT_EQ(str_toupper(s1), "ABCABC123.-+/");
     EXPECT_EQ(str_tolower(s1), "abcabc123.-+/");
+    EXPECT_EQ(str_toupper(s10), "12345678901234567890123456789012ABCABC123.-+/");
+    EXPECT_EQ(str_tolower(s10), "12345678901234567890123456789012abcabc123.-+/");
+    EXPECT_EQ(str_toupper(s11), "12345678ABCABC234567890123456789012ABCABC123.-+/XYZ");
+    EXPECT_EQ(str_tolower(s11), "12345678abcabc234567890123456789012abcabc123.-+/xyz");
 
     // join | split
     std::string s2                          = "a,,bb,,ccc,,dddd";

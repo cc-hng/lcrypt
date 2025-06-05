@@ -36,7 +36,7 @@ struct EncodeUnit : hn::UnrollerUnit<EncodeUnit, u8, u8> {
     const hn::Vec<HWY_FULL(u16)> _0x01000010 = hn::BitCast(_d16, hn::Set(_d32, 0x01000010));
     const vec_t _0                           = hn::Set(_d8, 0);
     const vec_t _13                          = hn::Set(_d8, 13);
-    const vec_t _26                          = hn::Set(_d8, 26);
+    const vec_t _25                          = hn::Set(_d8, 25);
     const vec_t _51                          = hn::Set(_d8, 51);
 
     // clang-format off
@@ -48,9 +48,9 @@ struct EncodeUnit : hn::UnrollerUnit<EncodeUnit, u8, u8> {
     };
     const vec_t _encode_indices = hn::LoadU(_d8, _encode_shuf_buf);
     const vec_t _encode_lut =
-        hn::Dup128VecFromValues(_d8, 'A', '0' - 52, '0' - 52, '0' - 52, '0' - 52, '0' - 52,
+        hn::Dup128VecFromValues(_d8, 'a' - 26, '0' - 52, '0' - 52, '0' - 52, '0' - 52, '0' - 52,
                                 '0' - 52, '0' - 52, '0' - 52, '0' - 52, '0' - 52, '+' - 62,
-                                '/' - 63, 'a' - 26, 0, 0);
+                                '/' - 63, 'A', 0, 0);
     // clang-format on
 
     hn::Vec<D> Func(ptrdiff_t, const hn::Vec<D> xx, const hn::Vec<D>) {
@@ -66,8 +66,8 @@ struct EncodeUnit : hn::UnrollerUnit<EncodeUnit, u8, u8> {
         // refer:
         // https://github.com/WojciechMula/base64simd/blob/master/encode/lookup.sse.cpp
         auto result     = hn::SaturatedSub(indices, _51);
-        const auto less = hn::IfThenZeroElse(hn::Gt(_26, indices), _13);
-        result          = hn::IfThenElse(hn::Gt(result, _0), result, less);
+        const auto less = hn::IfThenZeroElse(hn::Gt(indices, _25), _13);
+        result = hn::Or(result, less);
 
         result = hn::TableLookupBytes(_encode_lut, result);
         return hn::Add(result, indices);

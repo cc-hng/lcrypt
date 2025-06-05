@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <exception>
 #include <stdexcept>
 #include <string>

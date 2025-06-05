@@ -1,8 +1,6 @@
 #include "common.h"
-#include <exception>
 #include <stdexcept>
 #include <string_view>
-#include <vector>
 #include <lcrypt/hex.h>
 
 using namespace lc;
