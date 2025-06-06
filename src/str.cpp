@@ -40,7 +40,7 @@ struct UpperUnit : hn::UnrollerUnit<UpperUnit, uint8_t, uint8_t> {
         (void)idx;
         (void)yy;
         auto m = hn::And(hn::Ge(xx, _0x61), hn::Le(xx, _0x7a));
-        return hn::MaskedSubOr(xx, m, xx, _32);
+        return hn::IfThenElse(m, hn::Sub(xx, _32), xx);
     }
 };
 
@@ -55,7 +55,7 @@ struct LowerUnit : hn::UnrollerUnit<LowerUnit, uint8_t, uint8_t> {
         (void)idx;
         (void)yy;
         auto m = hn::And(hn::Ge(xx, _0x41), hn::Le(xx, _0x5a));
-        return hn::MaskedAddOr(xx, m, xx, _32);
+        return hn::IfThenElse(m, hn::Add(xx, _32), xx);
     }
 };
 

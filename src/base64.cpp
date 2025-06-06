@@ -1,19 +1,9 @@
 #include "lcrypt/base64.h"
+#include "detail/hwy.h"
 #include <stdexcept>
 #include <string>
 #include <hwy/contrib/unroller/unroller-inl.h>
-#include <hwy/highway.h>
 #include <string.h>
-
-#define HWY_CLAMP(x, min, max) (HWY_MAX(HWY_MIN((x), (max)), (min)))
-
-namespace hn = hwy::HWY_NAMESPACE;
-using vec_t  = hn::Vec<HWY_FULL(uint8_t)>;
-using u8     = uint8_t;
-using u16    = uint16_t;
-using u32    = uint32_t;
-using i8     = int8_t;
-using i16    = int16_t;
 
 namespace {
 
@@ -26,18 +16,14 @@ static inline size_t base64_padding_count(const char* buf, size_t len) {
 
 struct EncodeUnit : hn::UnrollerUnit<EncodeUnit, u8, u8> {
     using D = hn::ScalableTag<u8>;
-    static constexpr D _d8{};
-    static constexpr size_t N8 = hn::Lanes(_d8);
-    static constexpr HWY_FULL(u16) _d16{};
-    static constexpr HWY_FULL(u32) _d32{};
-    const vec_t _0x0fc0fc00                  = hn::BitCast(_d8, hn::Set(_d32, 0x0fc0fc00));
-    const hn::Vec<HWY_FULL(u16)> _0x04000040 = hn::BitCast(_d16, hn::Set(_d32, 0x04000040));
-    const vec_t _0x003f03f0                  = hn::BitCast(_d8, hn::Set(_d32, 0x003f03f0));
-    const hn::Vec<HWY_FULL(u16)> _0x01000010 = hn::BitCast(_d16, hn::Set(_d32, 0x01000010));
-    const vec_t _0                           = hn::Set(_d8, 0);
-    const vec_t _13                          = hn::Set(_d8, 13);
-    const vec_t _25                          = hn::Set(_d8, 25);
-    const vec_t _51                          = hn::Set(_d8, 51);
+    const vu8 _0x0fc0fc00                  = hn::BitCast(_du8, hn::Set(_du32, 0x0fc0fc00));
+    const vu16 _0x04000040 = hn::BitCast(_du16, hn::Set(_du32, 0x04000040));
+    const vu8 _0x003f03f0                  = hn::BitCast(_du8, hn::Set(_du32, 0x003f03f0));
+    const vu16 _0x01000010 = hn::BitCast(_du16, hn::Set(_du32, 0x01000010));
+    const vu8 _0                           = hn::Set(_du8, 0);
+    const vu8 _13                          = hn::Set(_du8, 13);
+    const vu8 _25                          = hn::Set(_du8, 25);
+    const vu8 _51                          = hn::Set(_du8, 51);
 
     // clang-format off
     HWY_ALIGN static constexpr uint8_t _encode_shuf_buf[] = {
@@ -46,9 +32,9 @@ struct EncodeUnit : hn::UnrollerUnit<EncodeUnit, u8, u8> {
         37, 36, 38, 37, 40, 39, 41, 40, 43, 42, 44, 33, 46, 45, 47, 46,  //
         49, 48, 50, 49, 52, 51, 53, 52, 55, 54, 56, 55, 58, 57, 59, 58,  //
     };
-    const vec_t _encode_indices = hn::LoadU(_d8, _encode_shuf_buf);
-    const vec_t _encode_lut =
-        hn::Dup128VecFromValues(_d8, 'a' - 26, '0' - 52, '0' - 52, '0' - 52, '0' - 52, '0' - 52,
+    const vu8 _encode_indices = hn::LoadU(_du8, _encode_shuf_buf);
+    const vu8 _encode_lut =
+        hn::Dup128VecFromValues(_du8, 'a' - 26, '0' - 52, '0' - 52, '0' - 52, '0' - 52, '0' - 52,
                                 '0' - 52, '0' - 52, '0' - 52, '0' - 52, '0' - 52, '+' - 62,
                                 '/' - 63, 'A', 0, 0);
     // clang-format on
@@ -58,16 +44,17 @@ struct EncodeUnit : hn::UnrollerUnit<EncodeUnit, u8, u8> {
         // https://github.com/WojciechMula/base64simd/blob/master/encode/encode.sse.cpp
         const auto in      = hn::TableLookupBytes(xx, _encode_indices);
         const auto t0      = hn::And(in, _0x0fc0fc00);
-        const auto t1      = hn::MulHigh(hn::BitCast(_d16, t0), _0x04000040);
+        const auto t1      = hn::MulHigh(hn::BitCast(_du16, t0), _0x04000040);
         const auto t2      = hn::And(in, _0x003f03f0);
-        const auto t3      = hn::Mul(hn::BitCast(_d16, t2), _0x01000010);
-        const auto indices = hn::Or(hn::BitCast(_d8, t1), hn::BitCast(_d8, t3));
+        const auto t3      = hn::Mul(hn::BitCast(_du16, t2), _0x01000010);
+        const auto indices = hn::Or(hn::BitCast(_du8, t1), hn::BitCast(_du8, t3));
 
         // refer:
         // https://github.com/WojciechMula/base64simd/blob/master/encode/lookup.sse.cpp
         auto result     = hn::SaturatedSub(indices, _51);
-        const auto less = hn::IfThenZeroElse(hn::Gt(indices, _25), _13);
-        result = hn::Or(result, less);
+        const auto less = IfThenElseZero(Lt(_du8, indices, hn::Set(_du8, 26)), hn::Set(_du8, 13));
+        // const auto less = IfThenElseZero(hn::VecFromMask(hn::Lt(indices, hn::Set(_du8, 26))), hn::Set(_du8, 13));
+        result          = hn::Or(result, less);
 
         result = hn::TableLookupBytes(_encode_lut, result);
         return hn::Add(result, indices);
@@ -80,11 +67,11 @@ struct EncodeUnit : hn::UnrollerUnit<EncodeUnit, u8, u8> {
         /// indexof(src):indexof(dest) => 3:4
         ptrdiff_t j = idx * 3 / 4;
         if constexpr (multiple == 4) {
-            auto p1 = hn::LoadN(_d8, from + j - 4, count + 4);
-            auto p2 = hn::LoadN(_d8, from + j + count - 4, count + 4);
-            return hn::Add(p1, hn::SlideUpLanes(_d8, p2, 32));
+            auto p1 = hn::LoadN(_du8, from + j - 4, count + 4);
+            auto p2 = hn::LoadN(_du8, from + j + count - 4, count + 4);
+            return hn::Add(p1, hn::SlideUpLanes(_du8, p2, 32));
         } else if constexpr (multiple == 2 || multiple == 1) {
-            return hn::LoadU(_d8, from + j - 4);
+            return hn::LoadU(_du8, from + j - 4);
         } else {
             throw std::runtime_error("Unsupported lanes!!! sizeof(lanes) = " + std::to_string(N8));
         }
@@ -106,25 +93,18 @@ struct EncodeUnit : hn::UnrollerUnit<EncodeUnit, u8, u8> {
         if (places < 0) {
             i = idx + places + N8;
         }
-        hn::BlendedStore(x, hn::FirstN(_d8, p), _d8, to + i);
+        hn::BlendedStore(x, hn::FirstN(_du8, p), _du8, to + i);
         return p;
     }
 };
 
 struct DecodeUnit : hn::UnrollerUnit<DecodeUnit, u8, u8> {
     using D = hn::ScalableTag<u8>;
-    static constexpr D _d8{};
-    static constexpr HWY_FULL(u16) _d16{};
-    static constexpr HWY_FULL(u32) _d32{};
-    static constexpr HWY_FULL(i8) _di8{};
-    static constexpr HWY_FULL(i16) _di16{};
-    static constexpr size_t N8 = hn::Lanes(_d8);
-
-    const hn::Vec<D> _3          = hn::Set(_d8, 3);
-    const hn::Vec<D> _0x2f       = hn::Set(_d8, 0x2f);
-    const hn::Vec<D> _0x40       = hn::Set(_d8, 0x40);
-    const hn::Vec<D> _0x01400140 = hn::BitCast(_d8, hn::Set(_d32, 0x01400140));
-    const hn::Vec<D> _0x00011000 = hn::BitCast(_d8, hn::Set(_d32, 0x00011000));
+    const hn::Vec<D> _3          = hn::Set(_du8, 3);
+    const hn::Vec<D> _0x2f       = hn::Set(_du8, 0x2f);
+    const hn::Vec<D> _0x40       = hn::Set(_du8, 0x40);
+    const hn::Vec<D> _0x01400140 = hn::BitCast(_du8, hn::Set(_du32, 0x01400140));
+    const hn::Vec<D> _0x00011000 = hn::BitCast(_du8, hn::Set(_du32, 0x00011000));
     // clang-format off
     HWY_ALIGN static constexpr uint8_t _lut_buf[] = {
         2,  1,  0,  6,  5,  4,  10, 9,  8,  14, 13, 12, 3,  7,  11, 15,  //
@@ -132,23 +112,22 @@ struct DecodeUnit : hn::UnrollerUnit<DecodeUnit, u8, u8> {
         34, 33, 32, 38, 37, 36, 42, 41, 40, 46, 45, 44, 35, 39, 43, 47,  //
         50, 49, 48, 54, 53, 52, 58, 57, 56, 62, 61, 60, 51, 55, 59, 63,  //
     };
-    const hn::Vec<D> _lut = hn::LoadU(_d8, _lut_buf);
-    const hn::Vec<D> _shift_lut = hn::Dup128VecFromValues(_d8,
+    const hn::Vec<D> _lut = hn::LoadU(_du8, _lut_buf);
+    const hn::Vec<D> _shift_lut = hn::Dup128VecFromValues(_du8,
         /* 0 */ 0x00,        /* 1 */ 0x00,        /* 2 */ 0x3e - 0x2b, /* 3 */ 0x34 - 0x30,
         /* 4 */ 0x00 - 0x41, /* 5 */ 0x0f - 0x50, /* 6 */ 0x1a - 0x61, /* 7 */ 0x29 - 0x70,
         /* 8 */ 0x00,        /* 9 */ 0x00,        /* a */ 0x00,        /* b */ 0x00,
         /* c */ 0x00,        /* d */ 0x00,        /* e */ 0x00,        /* f */ 0x00
     );
 
-    static constexpr u8 linv = 1;
-    static constexpr u8 hinv = 0;
-    const hn::Vec<D> _lower_lut = hn::Dup128VecFromValues(_d8,
+    enum { hinv = 0, linv = 1 };
+    const hn::Vec<D> _lower_lut = hn::Dup128VecFromValues(_du8,
         /* 0 */ linv, /* 1 */ linv, /* 2 */ 0x2b, /* 3 */ 0x30,
         /* 4 */ 0x41, /* 5 */ 0x50, /* 6 */ 0x61, /* 7 */ 0x70,
         /* 8 */ linv, /* 9 */ linv, /* a */ linv, /* b */ linv,
         /* c */ linv, /* d */ linv, /* e */ linv, /* f */ linv
     );
-    const hn::Vec<D> _upper_lut = hn::Dup128VecFromValues(_d8,
+    const hn::Vec<D> _upper_lut = hn::Dup128VecFromValues(_du8,
         /* 0 */ hinv, /* 1 */ hinv, /* 2 */ 0x2b, /* 3 */ 0x39,
         /* 4 */ 0x4f, /* 5 */ 0x5a, /* 6 */ 0x6f, /* 7 */ 0x7a,
         /* 8 */ hinv, /* 9 */ hinv, /* a */ hinv, /* b */ hinv,
@@ -179,15 +158,15 @@ struct DecodeUnit : hn::UnrollerUnit<DecodeUnit, u8, u8> {
         // https://github.com/WojciechMula/base64simd/blob/master/decode/lookup.sse.cpp
         const auto higher_nibble = hn::ShiftRightSame(xx, 4);
         const auto shift         = hn::TableLookupBytes(_shift_lut, higher_nibble);
-        const auto eq_2f         = hn::Eq(xx, _0x2f);
         const auto t0            = hn::Add(xx, shift);
-        auto result              = hn::MaskedSubOr(t0, eq_2f, t0, _3);
+        const auto eq_2f         = hn::Eq(xx, _0x2f);
+        const auto result = hn::IfThenElse(eq_2f, hn::Sub(t0, _3), t0);
 
         /// check validity
         const auto below   = hn::Lt(xx, hn::TableLookupBytes(_lower_lut, higher_nibble));
         const auto above   = hn::Gt(xx, hn::TableLookupBytes(_upper_lut, higher_nibble));
         const auto outside = hn::AndNot(eq_2f, hn::Or(below, above));
-        int j              = hn::FindFirstTrue(_d8, outside);
+        int j              = hn::FindFirstTrue(_du8, outside);
         if (HWY_UNLIKELY(j != -1 && j < _places)) {
             throw lc::input_error(j + _idx, _in[j + _idx]);
         }
@@ -195,9 +174,9 @@ struct DecodeUnit : hn::UnrollerUnit<DecodeUnit, u8, u8> {
         /// decode
         const auto merged =
             hn::SatWidenMulPairwiseAdd(_di16, result, hn::BitCast(_di8, _0x01400140));
-        const auto packed = hn::WidenMulPairwiseAdd(_d32, hn::BitCast(_d16, merged),
-                                                    hn::BitCast(_d16, _0x00011000));
-        return hn::TableLookupBytes(hn::BitCast(_d8, packed), _lut);
+        const auto packed = hn::WidenMulPairwiseAdd(_du32, hn::BitCast(_du16, merged),
+                                                    hn::BitCast(_du16, _0x00011000));
+        return hn::TableLookupBytes(hn::BitCast(_du8, packed), _lut);
     }
 
     hn::Vec<D> MaskLoad(const ptrdiff_t idx, u8* from, const ptrdiff_t places) {
@@ -219,10 +198,10 @@ struct DecodeUnit : hn::UnrollerUnit<DecodeUnit, u8, u8> {
         ptrdiff_t j                = idx * 3 / 4;
         constexpr size_t count     = 12;  // 16 * 3 / 4
         constexpr size_t multiples = N8 / 16;
-        HWY_ALIGN uint8_t buf[64] = {0};
-        hn::StoreU(x, _d8, buf);
+        HWY_ALIGN uint8_t buf[64]  = {0};
+        hn::StoreU(x, _du8, buf);
         for (int i = 0; i < multiples; ++i, j += 12) {
-            hwy::CopyBytes(buf+i* 16, to + j, count);
+            hwy::CopyBytes(buf + i * 16, to + j, count);
         }
         return true;
     }
@@ -247,9 +226,9 @@ struct DecodeUnit : hn::UnrollerUnit<DecodeUnit, u8, u8> {
         default: break;            // no padding
         }
 
-        const size_t z = left;
+        const size_t z            = left;
         HWY_ALIGN uint8_t buf[64] = {0};
-        hn::StoreU(x, _d8, buf);
+        hn::StoreU(x, _du8, buf);
         for (int i = 0; i < multiples && left > 0; ++i, j += count, left -= count) {
             hwy::CopyBytes(buf + i * 16, to + j, HWY_MIN(left, count));
         }
